@@ -3,6 +3,7 @@ package com.habittracker.common.security;
 public final class SecurityConstants {
 
     private SecurityConstants() {
+        throw new UnsupportedOperationException("Utility class");
     }
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
