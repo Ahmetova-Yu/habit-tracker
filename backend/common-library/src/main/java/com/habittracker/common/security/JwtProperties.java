@@ -1,9 +1,17 @@
 package com.habittracker.common.security;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
@@ -11,45 +19,17 @@ public class JwtProperties {
     private Duration accessTtl;
     private Duration refreshTtl;
 
-    public JwtProperties() {
-    }
-
-    public JwtProperties(String secret, Duration accessTtl, Duration refreshTtl) {
-        this.secret = secret;
-        this.accessTtl = accessTtl;
-        this.refreshTtl = refreshTtl;
-        validate();
-    }
-
-    private void validate() {
+    public void validate() {
         if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException(
                     "JWT secret must be at least 32 bytes for HS256"
             );
         }
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public Duration getAccessTtl() {
-        return accessTtl;
-    }
-
-    public void setAccessTtl(Duration accessTtl) {
-        this.accessTtl = accessTtl;
-    }
-
-    public Duration getRefreshTtl() {
-        return refreshTtl;
-    }
-
-    public void setRefreshTtl(Duration refreshTtl) {
-        this.refreshTtl = refreshTtl;
+        if (accessTtl == null || accessTtl.isNegative() || accessTtl.isZero()) {
+            throw new IllegalArgumentException("accessTtl must be positive");
+        }
+        if (refreshTtl == null || refreshTtl.isNegative() || refreshTtl.isZero()) {
+            throw new IllegalArgumentException("refreshTtl must be positive");
+        }
     }
 }

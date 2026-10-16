@@ -6,6 +6,8 @@ import com.habittracker.user.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -13,33 +15,29 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     private final JwtProperties properties;
 
-    public JwtService(JwtProperties properties) {
-        this.properties = properties;
+    public String generateAccessToken(User user) {
+        return buildToken(user, properties.getAccessTtl());
     }
 
-    public String generateAccessToken(User user) {
+    public String generateRefreshToken(User user) {
+        return buildToken(user, properties.getRefreshTtl());
+    }
+
+    private String buildToken(User user, java.time.Duration ttl) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(properties.getAccessTtl())))
-                .signWith(getSigningKey())
-                .compact();
-    }
-
-    public String generateRefreshToken(User user) {
-        Instant now = Instant.now();
-        return Jwts.builder()
-                .subject(user.getId().toString())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(properties.getRefreshTtl())))
+                .expiration(Date.from(now.plus(ttl)))
                 .signWith(getSigningKey())
                 .compact();
     }
