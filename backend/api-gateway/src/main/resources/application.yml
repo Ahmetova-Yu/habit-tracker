@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Все запросы на /api/auth/** летят в user-service (8081)
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+
+        # Все запросы на /api/habits/** летят в habit-service (8082)
+        - id: habit-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/habits/**
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-production-at-least-32-bytes-long-for-hs256}
+  access-ttl: 15m
+  refresh-ttl: 7d
+
+logging:
+  level:
+    com.habittracker: DEBUG
