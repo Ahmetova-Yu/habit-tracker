@@ -21,6 +21,7 @@
         <module>common-library</module>
         <module>user-service</module>
         <module>api-gateway</module>
+        <module>habit-service</module>
     </modules>
 
     <properties>
