@@ -9,6 +9,7 @@ import com.habittracker.user.web.dto.AuthResponse;
 import com.habittracker.user.web.dto.LoginRequest;
 import com.habittracker.user.web.dto.RefreshRequest;
 import com.habittracker.user.web.dto.RegisterRequest;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,10 +63,17 @@ public class AuthService {
     public AuthResponse refresh(RefreshRequest request) {
         try {
             JwtClaims claims = jwtService.parseToken(request.getRefreshToken());
+
+            // Проверяем, что это действительно refresh-токен
+            if (!"refresh".equals(claims.type())) {
+                throw new UnauthorizedException("Token is not a refresh token");
+            }
+
             User user = userRepository.findById(claims.userId())
                     .orElseThrow(() -> new UnauthorizedException("User not found"));
             return issueTokens(user);
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Invalid refresh token: {}", e.getMessage());
             throw new UnauthorizedException("Invalid refresh token");
         }
     }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -23,19 +24,20 @@ public class JwtService {
     private final JwtProperties properties;
 
     public String generateAccessToken(User user) {
-        return buildToken(user, properties.getAccessTtl());
+        return buildToken(user, properties.getAccessTtl(), "access");
     }
 
     public String generateRefreshToken(User user) {
-        return buildToken(user, properties.getRefreshTtl());
+        return buildToken(user, properties.getRefreshTtl(), "refresh");
     }
 
-    private String buildToken(User user, java.time.Duration ttl) {
+    private String buildToken(User user, Duration ttl, String type) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
+                .claim("type", type) // разделяем токены
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ttl)))
                 .signWith(getSigningKey())
@@ -52,7 +54,8 @@ public class JwtService {
         return new JwtClaims(
                 Long.parseLong(claims.getSubject()),
                 claims.get("email", String.class),
-                claims.get("role", String.class)
+                claims.get("role", String.class),
+                claims.get("type", String.class)
         );
     }
 

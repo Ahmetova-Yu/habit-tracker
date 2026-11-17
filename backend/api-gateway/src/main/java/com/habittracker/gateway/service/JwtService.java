@@ -27,7 +27,8 @@ public class JwtService {
         return new JwtClaims(
                 Long.parseLong(claims.getSubject()),
                 claims.get("email", String.class),
-                claims.get("role", String.class)
+                claims.get("role", String.class),
+                claims.get("type", String.class)
         );
     }
 
