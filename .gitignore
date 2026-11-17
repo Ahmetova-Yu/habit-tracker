@@ -30,3 +30,8 @@ node_modules/
 dist/
 build/
 .next/
+
+# Maven build files
+target/
+**/target/
+*.lst
