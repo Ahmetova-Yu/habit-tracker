@@ -26,7 +26,9 @@ public class HabitScheduler {
         log.info("Starting daily check for inactive habits...");
 
         Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
-        List<Habit> inactiveHabits = habitRepository.findInactiveHabits(thirtyDaysAgo);
+        List<Habit> inactiveHabits = habitRepository.findInactiveHabits(
+                HabitStatus.ACTIVE, thirtyDaysAgo
+        );
 
         for (Habit habit : inactiveHabits) {
             habit.setStatus(HabitStatus.ARCHIVED);

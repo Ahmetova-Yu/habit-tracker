@@ -16,6 +16,11 @@ public interface HabitRepository extends JpaRepository<Habit, Long> {
 
     Optional<Habit> findByIdAndUserId(Long id, Long userId);
 
-    @Query("SELECT h FROM Habit h WHERE h.status = 'ACTIVE' AND h.lastCompletedAt < :threshold")
-    List<Habit> findInactiveHabits(@Param("threshold") Instant threshold);
+    @Query("""
+        SELECT h FROM Habit h 
+        WHERE h.status = :status 
+        AND (h.lastCompletedAt IS NULL OR h.lastCompletedAt < :threshold)
+        """)
+    List<Habit> findInactiveHabits(@Param("status") HabitStatus status,
+                                   @Param("threshold") Instant threshold);
 }

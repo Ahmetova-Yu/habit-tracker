@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
@@ -66,6 +67,31 @@ public class HabitService {
         if (request.getIcon() != null) habit.setIcon(request.getIcon());
 
         return toDto(habit);
+    }
+
+    @Transactional
+    public void complete(Long userId, Long habitId) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, userId)
+                .orElseThrow(() -> new NotFoundException("Habit not found"));
+
+        Instant now = Instant.now();
+        Instant lastCompleted = habit.getLastCompletedAt();
+
+        // Логика стрика: если с момента последнего выполнения прошло меньше суток,
+        // то streak продолжается, иначе сбрасывается до 1
+        if (lastCompleted != null && lastCompleted.isAfter(now.minus(1, ChronoUnit.DAYS))) {
+            habit.setCurrentStreak(habit.getCurrentStreak() + 1);
+        } else {
+            habit.setCurrentStreak(1);
+        }
+
+        // Обновляем лучший стрик
+        if (habit.getCurrentStreak() > habit.getBestStreak()) {
+            habit.setBestStreak(habit.getCurrentStreak());
+        }
+
+        habit.setLastCompletedAt(now);
+        log.info("Habit completed: id={}, currentStreak={}", habitId, habit.getCurrentStreak());
     }
 
     @Transactional

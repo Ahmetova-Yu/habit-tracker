@@ -39,12 +39,20 @@ public class HabitController {
         return habitService.getArchived(userId);
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}") // было @PutMapping
     public HabitDto update(
             @RequestHeader(SecurityConstants.USER_ID_HEADER) Long userId,
             @PathVariable Long id,
             @Valid @RequestBody UpdateHabitRequest request) {
         return habitService.update(userId, id, request);
+    }
+
+    @PostMapping("/{id}/complete") // новый эндпоинт
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void complete(
+            @RequestHeader(SecurityConstants.USER_ID_HEADER) Long userId,
+            @PathVariable Long id) {
+        habitService.complete(userId, id);
     }
 
     @PatchMapping("/{id}/archive")
