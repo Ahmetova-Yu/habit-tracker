@@ -1,5 +1,6 @@
 package com.habittracker.common.security;
 
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class JwtProperties {
     private Duration accessTtl;
     private Duration refreshTtl;
 
+    @PostConstruct
     public void validate() {
         if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException(
