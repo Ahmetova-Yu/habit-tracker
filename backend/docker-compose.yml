@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # ─────────── База данных ───────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: habit-postgres
+    environment:
+      POSTGRES_DB: habit_tracker
+      POSTGRES_USER: habit
+      POSTGRES_PASSWORD: habit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - habit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habit -d habit_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─────────── user-service ───────────
+  user-service:
+    build: ./user-service
+    container_name: habit-user-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/habit_tracker
+      DB_USER: habit
+      DB_PASSWORD: habit
+      JWT_SECRET: change-me-in-production-at-least-32-bytes-long-for-hs256
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - habit-network
+
+  # ─────────── habit-service ───────────
+  habit-service:
+    build: ./habit-service
+    container_name: habit-habit-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/habit_tracker?currentSchema=habit
+      DB_USER: habit
+      DB_PASSWORD: habit
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - habit-network
+
+  # ─────────── api-gateway ───────────
+  api-gateway:
+    build: ./api-gateway
+    container_name: habit-api-gateway
+    environment:
+      JWT_SECRET: change-me-in-production-at-least-32-bytes-long-for-hs256
+      # Переопределяем адреса сервисов для работы внутри Docker-сети
+    ports:
+      - "8080:8080" # Пробрасываем только шлюз наружу
+    depends_on:
+      - user-service
+      - habit-service
+    networks:
+      - habit-network
+
+volumes:
+  postgres_data:
+
+networks:
+  habit-network:
+    driver: bridge

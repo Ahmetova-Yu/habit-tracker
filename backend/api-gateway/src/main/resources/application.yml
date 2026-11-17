@@ -9,15 +9,12 @@ spring:
   cloud:
     gateway:
       routes:
-        # Все запросы на /api/auth/** летят в user-service (8081)
         - id: user-service
-          uri: http://localhost:8081
+          uri: http://user-service:8081
           predicates:
             - Path=/api/auth/**
-
-        # Все запросы на /api/habits/** летят в habit-service (8082)
         - id: habit-service
-          uri: http://localhost:8082
+          uri: http://habit-service:8082
           predicates:
             - Path=/api/habits/**
 
