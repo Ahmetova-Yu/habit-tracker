@@ -12,6 +12,16 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        default_schema: habit
   flyway:
     enabled: true
     locations: classpath:db/migration
+    schemas: habit
+    default-schema: habit
+    table: flyway_schema_history
+
+logging:
+  level:
+    com.habittracker: DEBUG
