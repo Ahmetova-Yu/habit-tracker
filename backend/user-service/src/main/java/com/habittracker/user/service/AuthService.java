@@ -119,4 +119,26 @@ public class AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // 1. Проверяем, что старый пароль верный
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new BusinessException("Invalid old password");
+        }
+
+        // 2. Проверяем, что новый пароль отличается от старого
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new BusinessException("New password must be different from the old one");
+        }
+
+        // 3. Хешируем новый пароль и сохраняем
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user); // (обычно не обязательно при @Transactional, но для наглядности)
+
+        log.info("Password changed for user: {}", user.getUsername());
+    }
 }

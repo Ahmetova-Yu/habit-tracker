@@ -2,10 +2,12 @@ package com.habittracker.user.web;
 
 import com.habittracker.common.security.SecurityConstants;
 import com.habittracker.user.service.AuthService;
+import com.habittracker.user.web.dto.ChangePasswordRequest;
 import com.habittracker.user.web.dto.UpdateProfileRequest;
 import com.habittracker.user.web.dto.UserProfileDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,5 +28,13 @@ public class UserController {
             @RequestHeader(SecurityConstants.USER_ID_HEADER) Long userId,
             @Valid @RequestBody UpdateProfileRequest request) {
         return authService.updateProfile(userId, request);
+    }
+
+    @PatchMapping("/me/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @RequestHeader(SecurityConstants.USER_ID_HEADER) Long userId,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(userId, request);
     }
 }
