@@ -1,14 +1,12 @@
 package com.habittracker.user.service;
 
 import com.habittracker.common.exception.BusinessException;
+import com.habittracker.common.exception.NotFoundException;
 import com.habittracker.common.exception.UnauthorizedException;
 import com.habittracker.common.security.JwtClaims;
 import com.habittracker.user.domain.User;
 import com.habittracker.user.repository.UserRepository;
-import com.habittracker.user.web.dto.AuthResponse;
-import com.habittracker.user.web.dto.LoginRequest;
-import com.habittracker.user.web.dto.RefreshRequest;
-import com.habittracker.user.web.dto.RegisterRequest;
+import com.habittracker.user.web.dto.*;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,5 +82,41 @@ public class AuthService {
                 jwtService.generateRefreshToken(user),
                 jwtService.accessTtlSeconds()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileDto getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        return toProfileDto(user);
+    }
+
+    @Transactional
+    public UserProfileDto updateProfile(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new BusinessException("Username already taken");
+            }
+            user.setUsername(request.getUsername());
+        }
+
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        return toProfileDto(user);
+    }
+
+    private UserProfileDto toProfileDto(User user) {
+        return UserProfileDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
 }
