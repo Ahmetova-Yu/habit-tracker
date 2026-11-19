@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -117,6 +119,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .avatarUrl(user.getAvatarUrl())
+                .lastActiveAt(user.getLastActiveAt())
                 .build();
     }
 
@@ -140,5 +143,13 @@ public class AuthService {
         userRepository.save(user); // (обычно не обязательно при @Transactional, но для наглядности)
 
         log.info("Password changed for user: {}", user.getUsername());
+    }
+
+    @Transactional
+    public void updateLastActive(Long userId) {
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setLastActiveAt(Instant.now());
+            userRepository.save(user);
+        });
     }
 }

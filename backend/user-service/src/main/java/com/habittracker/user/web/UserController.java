@@ -37,4 +37,10 @@ public class UserController {
             @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(userId, request);
     }
+
+    @PostMapping("/me/heartbeat")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void heartbeat(@RequestHeader(SecurityConstants.USER_ID_HEADER) Long userId) {
+        authService.updateLastActive(userId);
+    }
 }

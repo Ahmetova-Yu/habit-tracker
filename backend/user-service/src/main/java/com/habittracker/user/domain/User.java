@@ -57,6 +57,9 @@ public class User {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "last_active_at")
+    private Instant lastActiveAt;
+
     @PrePersist
     void onCreate() {
         if (createdAt == null) createdAt = Instant.now();
