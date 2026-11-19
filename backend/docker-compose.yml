@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  # ─────────── Redis ───────────
+  redis:
+    image: redis:7-alpine
+    container_name: habit-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - habit-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # ─────────── База данных ───────────
   postgres:
     image: postgres:16-alpine
@@ -56,12 +70,17 @@ services:
     container_name: habit-api-gateway
     environment:
       JWT_SECRET: change-me-in-production-at-least-32-bytes-long-for-hs256
-      # Переопределяем адреса сервисов для работы внутри Docker-сети
+      SPRING_DATA_REDIS_HOST: redis # <--- Имя контейнера
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
-      - "8080:8080" # Пробрасываем только шлюз наружу
+      - "8080:8080"
     depends_on:
-      - user-service
-      - habit-service
+      redis:
+        condition: service_healthy # Ждем, пока Redis поднимется
+      user-service:
+        condition: service_started
+      habit-service:
+        condition: service_started
     networks:
       - habit-network
 
