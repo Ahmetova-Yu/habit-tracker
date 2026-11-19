@@ -5,6 +5,7 @@ import com.habittracker.common.dto.ErrorResponse;
 import com.habittracker.common.security.JwtClaims;
 import com.habittracker.common.security.SecurityConstants;
 import com.habittracker.gateway.service.JwtService;
+import com.habittracker.gateway.service.TokenBlacklistService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
+    private final TokenBlacklistService blacklistService;
 
     private final List<String> publicPaths = List.of(
             "/api/auth/register",
@@ -57,23 +59,30 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             JwtClaims claims = jwtService.parseToken(token);
 
             // Проверяем, что это access-токен, а не refresh
+            // Проверяем, что это access-токен
             if (!"access".equals(claims.type())) {
                 return unauthorized(exchange, "Invalid token type");
             }
 
-            // Удаляем входящие заголовки и добавляем свои (защита от подделки)
-            ServerHttpRequest mutatedRequest = request.mutate()
-                    .headers(headers -> {
-                        headers.remove(SecurityConstants.USER_ID_HEADER);
-                        headers.remove(SecurityConstants.USER_EMAIL_HEADER);
-                        headers.remove(SecurityConstants.USER_ROLE_HEADER);
-                    })
-                    .header(SecurityConstants.USER_ID_HEADER, claims.userId().toString())
-                    .header(SecurityConstants.USER_EMAIL_HEADER, claims.email())
-                    .header(SecurityConstants.USER_ROLE_HEADER, claims.role())
-                    .build();
-
-            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+// ВОТ ЭТОТ БЛОК ДОЛЖЕН БЫТЬ:
+            return blacklistService.isBlacklisted(token)
+                    .flatMap(isBlacklisted -> {
+                        if (isBlacklisted) {
+                            return unauthorized(exchange, "Token has been revoked");
+                        }
+                        // мутация заголовков...
+                        ServerHttpRequest mutatedRequest = request.mutate()
+                                .headers(headers -> {
+                                    headers.remove(SecurityConstants.USER_ID_HEADER);
+                                    headers.remove(SecurityConstants.USER_EMAIL_HEADER);
+                                    headers.remove(SecurityConstants.USER_ROLE_HEADER);
+                                })
+                                .header(SecurityConstants.USER_ID_HEADER, claims.userId().toString())
+                                .header(SecurityConstants.USER_EMAIL_HEADER, claims.email())
+                                .header(SecurityConstants.USER_ROLE_HEADER, claims.role())
+                                .build();
+                        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                    });
 
         } catch (ExpiredJwtException e) {
             return unauthorized(exchange, "Token expired");
