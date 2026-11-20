@@ -21,6 +21,10 @@ spring:
           uri: http://user-service:8081
           predicates:
             - Path=/api/users/**
+        - id: user-service-friends
+          uri: http://user-service:8081
+          predicates:
+            - Path=/api/friends/**
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
