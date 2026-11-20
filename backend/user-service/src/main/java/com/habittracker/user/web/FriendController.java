@@ -47,4 +47,28 @@ public class FriendController {
             @RequestHeader(SecurityConstants.USER_ID_HEADER) Long myId) {
         return friendshipService.getPendingRequests(myId);
     }
+
+    @PostMapping("/request/by-username")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void sendRequestByUsername(
+            @RequestHeader(SecurityConstants.USER_ID_HEADER) Long myId,
+            @RequestParam String username) {
+        friendshipService.sendRequestByUsername(myId, username);
+    }
+
+    @DeleteMapping("/request/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelOrDeclineRequest(
+            @RequestHeader(SecurityConstants.USER_ID_HEADER) Long myId,
+            @PathVariable Long userId) {
+        friendshipService.cancelOrDeclineRequest(myId, userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(
+            @RequestHeader(SecurityConstants.USER_ID_HEADER) Long myId,
+            @PathVariable Long userId) {
+        friendshipService.removeFriend(myId, userId);
+    }
 }

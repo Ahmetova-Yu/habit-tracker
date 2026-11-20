@@ -87,4 +87,44 @@ public class FriendshipService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void sendRequestByUsername(Long requesterId, String targetUsername) {
+        // 1. Ищем юзера по нику
+        User addressee = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new NotFoundException("User with username '" + targetUsername + "' not found"));
+
+        // 2. Вызываем уже готовый метод sendRequest
+        sendRequest(requesterId, addressee.getId());
+    }
+
+    @Transactional
+    public void cancelOrDeclineRequest(Long userId, Long otherUserId) {
+        // 1. Ищем заявку между ними в любую сторону
+        Friendship friendship = friendshipRepository.findBetweenUsers(userId, otherUserId)
+                .orElseThrow(() -> new NotFoundException("Friend request not found"));
+
+        // 2. Проверяем, что она в статусе PENDING (нельзя отменить уже принятую дружбу)
+        if (friendship.getStatus() != FriendshipStatus.PENDING) {
+            throw new BusinessException("You can only cancel or decline pending requests");
+        }
+
+        // 3. Удаляем запись
+        friendshipRepository.delete(friendship);
+    }
+
+    @Transactional
+    public void removeFriend(Long userId, Long friendId) {
+        // 1. Ищем заявку между ними
+        Friendship friendship = friendshipRepository.findBetweenUsers(userId, friendId)
+                .orElseThrow(() -> new NotFoundException("Friendship not found"));
+
+        // 2. Проверяем, что они реально друзья
+        if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
+            throw new BusinessException("You can only remove users from your friends list");
+        }
+
+        // 3. Удаляем запись
+        friendshipRepository.delete(friendship);
+    }
 }
