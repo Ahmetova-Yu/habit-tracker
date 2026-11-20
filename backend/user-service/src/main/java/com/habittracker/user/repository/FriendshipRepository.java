@@ -2,6 +2,7 @@ package com.habittracker.user.repository;
 
 import com.habittracker.user.domain.Friendship;
 import com.habittracker.user.domain.FriendshipStatus;
+import com.habittracker.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
